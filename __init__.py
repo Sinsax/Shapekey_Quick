@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "Shapekey Quick",
+    "name": "Shapekey_Quick",
     "author": "Sinsa",
     "blender": (4, 5, 3),
     "version": (1,1,0),
@@ -25,14 +25,10 @@ functions = [
 def register():
     for func in functions:
         bpy.utils.register_class(func)
-    
+
     bpy.types.Scene.shapekey_copy_props = bpy.props.PointerProperty(type=shapekey_quick.ShapekeyProperties)
     bpy.types.Scene.select_dirction = bpy.props.PointerProperty(type=shapekey_quick.DirctionProperties)
 
-    # bpy.utils.register_class(select_vertices.GlobalAxisSelector)
-    # bpy.utils.register_class(shapekey.ShapekeyList)
-    # bpy.utils.register_class(shapekey.ShapekeyList_UI)
-    # bpy.types.Scene.shapekey_props = bpy.props.PointerProperty(type=shapekey.ShapekeyList_UI)
 
 def unregister():
     for func in functions:
@@ -41,10 +37,6 @@ def unregister():
     del bpy.types.Scene.shapekey_copy_props
     del bpy.types.Scene.select_dirction
 
-    # bpy.utils.unregister_class(select_vertices.AxisVerticesSelector)
-    # bpy.utils.unregister_class(shapekey.ShapekeyList)
-    # bpy.utils.unregister_class(shapekey.ShapekeyList_UI)
-    # del bpy.types.Scene.shapekey_props
 if __name__ == "__main__":
     register()
 

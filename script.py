@@ -4,8 +4,8 @@ import json
 import os
 
 
-# 使用示例
 """
+# 使用示例
 # 选择X坐标接近0的顶点
 # select_x_range_vertices(x_min=-0.001, x_max=0.001)
 
@@ -152,4 +152,25 @@ def copyshapekey(self):
         bpy.ops.object.shape_key_move(type='DOWN')
 
     if copy : key.key_blocks[bpy.context.object.active_shape_key_index].value = 1   
-    return {"FINISHED"}
+
+def mirrorshapekey(self):
+    # 获取当前活动对象
+    obj = bpy.context.object
+    if obj is None or obj.type != 'MESH':
+        self.report({'ERROR'}, "请选择一个网格对象")
+        return {'CANCELLED'}
+
+    # 获取当前顶点组
+    vg = obj.vertex_groups.active
+    if vg is None:
+        self.report({'ERROR'}, "请选择一个顶点组")
+        return {'CANCELLED'}
+    
+    group_name = vg.name
+
+    # 获取形态键数据
+    modelKey = obj.data.shape_keys
+    if modelKey is None:
+        self.report({'ERROR'}, "无可用形态键，已跳过")
+        return {'CANCELLED'}
+    

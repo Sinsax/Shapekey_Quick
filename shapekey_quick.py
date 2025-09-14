@@ -6,8 +6,9 @@ class arkit2mmd(bpy.types.Operator):
     bl_label = "arkit2mmd"
     bl_description = "将arkit形态键转为mmd格式"
     
-    def execute(self, context):
+    def execute(self,context):
         script.arkit2mmd(self)
+        return {'FINISHED'}
 
 class copyshapekey(bpy.types.Operator):
     bl_idname = "object.copyshapekey"
@@ -16,11 +17,12 @@ class copyshapekey(bpy.types.Operator):
     bl_options = {"REGISTER"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls,context):
         return True
 
-    def execute(self, context):
+    def execute(self,context):
         script.copyshapekey(self)
+        return {'FINISHED'}
 
 class mirrorshapkey(bpy.types.Operator):
     bl_idname = "object.mirrorshapkey"  # 使用小写字母
@@ -29,7 +31,7 @@ class mirrorshapkey(bpy.types.Operator):
     bl_options = {"REGISTER"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls,context):
         return True
 
     
@@ -66,6 +68,7 @@ class mirrorshapkey(bpy.types.Operator):
 
         # 镜像顶点组
         bpy.ops.object.shape_key_mirror(use_topology=False)
+        return {'FINISHED'}
 
 class selectside(bpy.types.Operator):
     bl_idname = "object.selectside"  # 使用小写字母
