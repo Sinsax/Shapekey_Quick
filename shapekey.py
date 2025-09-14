@@ -67,6 +67,44 @@ class mirrorshapkey(bpy.types.Operator):
         # 镜像顶点组
         bpy.ops.object.shape_key_mirror(use_topology=False)
 
+class selectside(bpy.types.Operator):
+    bl_idname = "object.selectside"  # 使用小写字母
+    bl_label = "X axis Vertices"
+    bl_description = "选择x轴正向或负向的顶点"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    
+    def execute(self,context):
+        scene = context.scene
+        select_dirction = scene.select_dirction
+        
+        # 根据选择执行不同操作
+        if select_dirction.select_dirction == 'OPTION1':
+            shapekey_quick.X_POSITIVE(self)
+            self.report({'INFO'}, "选择X正向的顶点")
+        elif select_dirction.select_dirction == 'OPTION2':
+            shapekey_quick.X_NEGATIVE(self)
+            self.report({'INFO'}, "选择X负向的顶点")
+        return {'FINISHED'}
+
+class selectzero(bpy.types.Operator):
+    bl_idname = "object.selectzero"  # 使用小写字母
+    bl_label = "zero Vertices"
+    bl_description = "选择x轴接近0的顶点"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    
+    def execute(self,context):
+        shapekey_quick.X_ZERO(self)
+        return {'FINISHED'}
         
 # 定义属性
 class ShapekeyProperties(bpy.types.PropertyGroup):
@@ -99,6 +137,7 @@ class ShapekeyQuickPanel(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
+        selectrow = layout.row()
         layout.operator("object.arkit2mmd")
         layout.prop(context.scene.shapekey_copy_props, "copy_bool")
         layout.operator("object.copyshapekey")
@@ -106,5 +145,7 @@ class ShapekeyQuickPanel(bpy.types.Panel):
         # mirrorshapkey
         layout.prop(context.scene.select_dirction, "select_dirction", expand=True)
         layout.operator("object.mirrorshapkey")
+        selectrow.operator("object.selectside")
+        selectrow.operator("object.selectzero")
         # 显示形态键滑块
         

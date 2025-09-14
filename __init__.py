@@ -21,7 +21,10 @@ def register():
     bpy.utils.register_class(shapekey.DirctionProperties)
     bpy.types.Scene.select_dirction = bpy.props.PointerProperty(type=shapekey.DirctionProperties)
     bpy.utils.register_class(shapekey.ShapekeyQuickPanel)
+
     bpy.utils.register_class(shapekey.mirrorshapkey)
+    bpy.utils.register_class(shapekey.selectside)
+    bpy.utils.register_class(shapekey.selectzero)
     # bpy.utils.register_class(select_vertices.GlobalAxisSelector)
     # bpy.utils.register_class(shapekey.ShapekeyList)
     # bpy.utils.register_class(shapekey.ShapekeyList_UI)
@@ -37,6 +40,8 @@ def unregister():
     bpy.utils.unregister_class(shapekey.ShapekeyQuickPanel)
 
     bpy.utils.unregister_class(shapekey.mirrorshapkey)
+    bpy.utils.unregister_class(shapekey.selectside)
+    bpy.utils.unregister_class(shapekey.selectzero)
     # bpy.utils.unregister_class(select_vertices.AxisVerticesSelector)
     # bpy.utils.unregister_class(shapekey.ShapekeyList)
     # bpy.utils.unregister_class(shapekey.ShapekeyList_UI)
