@@ -23,9 +23,9 @@ def register():
     bpy.utils.register_class(shapekey.ShapekeyQuickPanel)
     bpy.utils.register_class(shapekey.mirrorshapkey)
     # bpy.utils.register_class(select_vertices.GlobalAxisSelector)
-    bpy.utils.register_class(shapekey.ShapekeyList)
-    bpy.utils.register_class(shapekey.ShapekeyList_UI)
-    bpy.types.Scene.shapekey_props = bpy.props.PointerProperty(type=shapekey.ShapekeyList_UI)
+    # bpy.utils.register_class(shapekey.ShapekeyList)
+    # bpy.utils.register_class(shapekey.ShapekeyList_UI)
+    # bpy.types.Scene.shapekey_props = bpy.props.PointerProperty(type=shapekey.ShapekeyList_UI)
 
 def unregister():
     bpy.utils.unregister_class(shapekey.arkit2mmd)
@@ -38,8 +38,8 @@ def unregister():
 
     bpy.utils.unregister_class(shapekey.mirrorshapkey)
     # bpy.utils.unregister_class(select_vertices.AxisVerticesSelector)
-    bpy.utils.unregister_class(shapekey.ShapekeyList)
-    bpy.utils.unregister_class(shapekey.ShapekeyList_UI)
+    # bpy.utils.unregister_class(shapekey.ShapekeyList)
+    # bpy.utils.unregister_class(shapekey.ShapekeyList_UI)
     del bpy.types.Scene.shapekey_props
 if __name__ == "__main__":
     register()
