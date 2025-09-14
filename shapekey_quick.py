@@ -1,155 +1,151 @@
-import bpy # pyright: ignore[reportMissingImports]
-import bmesh # type: ignore
-import json
-import os
+import bpy # type: ignore
+from . import script
+# arkit表情转为mmd的格式
+class arkit2mmd(bpy.types.Operator):
+    bl_idname = "object.arkit2mmd"
+    bl_label = "arkit2mmd"
+    bl_description = "将arkit形态键转为mmd格式"
+    
+    def execute(self, context):
+        script.arkit2mmd(self)
 
+class copyshapekey(bpy.types.Operator):
+    bl_idname = "object.copyshapekey"
+    bl_label = "copy shapekey"
+    bl_description = "混合当前表情形态键到当前的位置"
+    bl_options = {"REGISTER"}
 
-# 使用示例
-"""
-# 选择X坐标接近0的顶点
-# select_x_range_vertices(x_min=-0.001, x_max=0.001)
+    @classmethod
+    def poll(cls, context):
+        return True
 
-# 选择x负方向
-# select_x_range_vertices(x_min=float('-inf'), x_max=0)
+    def execute(self, context):
+        script.copyshapekey(self)
 
-# 选择x正方向
-# select_x_range_vertices(x_min=0, x_max=float('inf'))
-"""
-def select_x_range_vertices(x_min=-0.1, x_max=0.1):
-    """
-    选择X坐标在指定范围内的顶点
-    
-    参数:
-    x_min: X坐标的最小值
-    x_max: X坐标的最大值
-    """
-    # 获取活动对象
-    obj = bpy.context.active_object
-    
-    if obj is None or obj.type != 'MESH':
-        print("请选择一个网格对象")
-        return
-    
-    # 进入编辑模式
-    bpy.ops.object.mode_set(mode='EDIT')
-    
-    # 获取网格数据
-    mesh = bmesh.from_edit_mesh(obj.data)
-    
-    # 确保使用顶点选择模式
-    if not mesh.select_mode & {'VERT'}:
-        mesh.select_mode = {'VERT'}
-        bpy.context.tool_settings.mesh_select_mode = (True, False, False)
-    
-    # 取消选择所有顶点
-    for v in mesh.verts:
-        v.select = False
-    
-    # 选择X坐标在指定范围内的顶点
-    selected_verts = []
-    for v in mesh.verts:
-        if x_min <= v.co.x <= x_max:
-            v.select = True
-            selected_verts.append(v)
-    
-    # 更新视图
-    bmesh.update_edit_mesh(obj.data)
-    print(f"已选择{len(selected_verts)}个X坐标在[{x_min}, {x_max}]范围内的顶点")
+class mirrorshapkey(bpy.types.Operator):
+    bl_idname = "object.mirrorshapkey"  # 使用小写字母
+    bl_label = "mirror shapkey Select Axis Vertices"
+    bl_description = "镜像当前顶点组到对应的形态键"
+    bl_options = {"REGISTER"}
 
-def X_POSITIVE(self):
-    select_x_range_vertices(x_min=0, x_max=float('inf'))
-    self.report({'INFO'}, "已选择X正方向顶点")
-def X_NEGATIVE(self):
-    select_x_range_vertices(x_min=float('-inf'), x_max=0)
-    self.report({'INFO'}, "已选择X负方向顶点")
-def X_ZERO(self):
-    select_x_range_vertices(x_min=-0.001, x_max=0.001)
-    self.report({'INFO'}, "已选择X接近0的顶点")
+    @classmethod
+    def poll(cls, context):
+        return True
 
-def arkit2mmd(self):
-    modelKey = bpy.context.object.data.shape_keys
-    # 是否有形态键
-    if modelKey is None :
-        return {'无形态键可用'}
-
-    # 获取插件文件所在目录
-    addon_directory = os.path.dirname(__file__)
-    json_file_path = os.path.join(addon_directory, 'shapekey_mapping.json')
     
-    # 读取JSON文件
-    if os.path.exists(json_file_path):
-        with open(json_file_path, 'r', encoding='utf-8') as json_file:
-            mapping = json.load(json_file)
-            self.report({'INFO'}, f"JSON Data: {mapping}")
-    else:
-        self.report({'ERROR'}, "JSON file not found")
-    
-    # 映射生成形态键
-
-    for mapkey in mapping:
-        skip = False
-        self.report({'INFO'},str(mapkey))
-        # self.report({'INFO'},str(mapping[mapkey][0]))
-        '''
-        if not mapping[mapkey][0] in list(modelKey.key_blocks):
-            self.report({'INFO'},"无可用形态键，已跳过")
-            continue
-        '''
+    def execute(self,context):
+        scene = context.scene
+        select_dirction = scene.select_dirction
         
-        # 将mapping中的所需的形态键启用
-        for key in mapping[mapkey]:
-            
-            # 提供负值下限 
-            # 检测是否有对应的形态键
-            try:
-                modelKey.key_blocks[key].slider_min = -1
-            except:  # noqa: E722
-                skip = True
-                break
-            modelKey.key_blocks[key].value = mapping[mapkey][key]
-            # 恢复下限
-            modelKey.key_blocks[key].slider_min = 0
-        if skip :
-            self.report({'INFO'}, key)
-            self.report({'INFO'},"无匹配形态键，已跳过")
-            continue
+        # 根据选择执行不同操作
+        if select_dirction.select_dirction == 'OPTION1':
+            script.X_POSITIVE(self)
+            self.report({'INFO'}, "选择X正向的顶点")
+        elif select_dirction.select_dirction == 'OPTION2':
+            script.X_NEGATIVE(self)
+            self.report({'INFO'}, "选择X负向的顶点")
         
-        # 混合为新形状
-        bpy.ops.object.shape_key_add(from_mix=True)
+        bpy.ops.object.vertex_group_add()
+        bpy.context.scene.tool_settings.vertex_group_weight = 1
+        bpy.ops.object.vertex_group_assign()
+        # 获取当前顶点组的名称
+        group_name = bpy.context.object.vertex_groups.active.name
+        script.X_ZERO(self)
+        bpy.context.scene.tool_settings.vertex_group_weight = 0.5
+        bpy.ops.object.vertex_group_assign()
 
+        # 将顶点组分配给指定的形态键
+        modelKey = bpy.context.object.data.shape_keys
+        # 当前活动的形态键
+        index = bpy.context.object.active_shape_key_index
+        name = modelKey.key_blocks[index].name
+        try:
+            modelKey.key_blocks[name].vertex_group = group_name
+        except:  # noqa: E722
+            self.report({'INFO'}, "无可用形态键，已跳过")
 
-        # for key in bpy.context.object.data.shape_keys.key_blocks: key.value =0
-        # 清空之前的shapekey
-        for key in mapping[mapkey]:
-            modelKey.key_blocks[key].value = 0
+        # 镜像顶点组
+        bpy.ops.object.shape_key_mirror(use_topology=False)
+
+class selectside(bpy.types.Operator):
+    bl_idname = "object.selectside"  # 使用小写字母
+    bl_label = "X axis Vertices"
+    bl_description = "选择x轴正向或负向的顶点"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    
+    def execute(self,context):
+        scene = context.scene
+        select_dirction = scene.select_dirction
         
-        self.report({'INFO'},str(mapkey))
+        # 根据选择执行不同操作
+        if select_dirction.select_dirction == 'OPTION1':
+            script.X_POSITIVE(self)
+            self.report({'INFO'}, "选择X正向的顶点")
+        elif select_dirction.select_dirction == 'OPTION2':
+            script.X_NEGATIVE(self)
+            self.report({'INFO'}, "选择X负向的顶点")
+        return {'FINISHED'}
+
+class selectzero(bpy.types.Operator):
+    bl_idname = "object.selectzero"  # 使用小写字母
+    bl_label = "zero Vertices"
+    bl_description = "选择x轴接近0的顶点"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    
+    def execute(self,context):
+        script.X_ZERO(self)
+        return {'FINISHED'}
         
-        # 改名
-        currentkey = modelKey.key_blocks[len(modelKey.key_blocks)-1]
-        #    modelKey.key_blocks[index].name = mapkey.name + "_copy"
-        currentkey.name = mapkey
-        self.report({'INFO'},mapkey + "已生成")
+# 定义属性
+class ShapekeyProperties(bpy.types.PropertyGroup):
+    
+    copy_bool: bpy.props.BoolProperty(
+        name="是否复制",
+        description="不选择则为覆盖",
+        default=True
+    ) # type: ignore
 
-def copyshapekey(self):
-    copy = bpy.context.scene.shapekey_copy_props.copy_bool
-    self.report({'INFO'}, f"Another Operator Executed with copy_bool = {copy}")
-    key = bpy.context.object.data.shape_keys
-    index = bpy.context.object.active_shape_key_index
-    name = key.key_blocks[index].name
+class DirctionProperties(bpy.types.PropertyGroup):
+    # 定义单选按钮的选项
+    select_dirction: bpy.props.EnumProperty(
+        name="选项",
+        description="选择一个选项",
+        items=[
+            ('OPTION1', "X正向", "选择X正向的顶点"),
+            ('OPTION2', "X负向", "选择X负向的顶点"),
+        ],
+        default='OPTION1'
+    ) # type: ignore
 
-    #if copy : key.key_blocks[index].value = 1
-    bpy.ops.object.shape_key_add(from_mix=True)
-    bpy.context.object.active_shape_key_index = index
-    if copy :key.key_blocks[index].value = 0
-
-    if not copy : bpy.ops.object.shape_key_remove(all=False)
-    bpy.context.object.active_shape_key_index = len(key.key_blocks)-1
-    if not copy : key.key_blocks[bpy.context.object.active_shape_key_index].name = name
-
-    bpy.ops.object.shape_key_move(type='TOP')
-    for a in range(0,index-1):
-        bpy.ops.object.shape_key_move(type='DOWN')
-
-    if copy : key.key_blocks[bpy.context.object.active_shape_key_index].value = 1   
-    return {"FINISHED"}
+# 定义一个面板
+class ShapekeyQuickPanel(bpy.types.Panel):
+    bl_label = "Shapekey Quick"
+    bl_idname = "OBJECT_PT_Shapekey_panel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Shapekey Quick'
+    
+    def draw(self, context):
+        layout = self.layout
+        selectrow = layout.row()
+        layout.operator("object.arkit2mmd")
+        layout.prop(context.scene.shapekey_copy_props, "copy_bool")
+        layout.operator("object.copyshapekey")
+        
+        # mirrorshapkey
+        layout.prop(context.scene.select_dirction, "select_dirction", expand=True)
+        layout.operator("object.mirrorshapkey")
+        selectrow.operator("object.selectside")
+        selectrow.operator("object.selectzero")
+        # 显示形态键滑块
+        
