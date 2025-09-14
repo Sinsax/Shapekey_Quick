@@ -40,7 +40,7 @@ def unregister():
     # bpy.utils.unregister_class(select_vertices.AxisVerticesSelector)
     # bpy.utils.unregister_class(shapekey.ShapekeyList)
     # bpy.utils.unregister_class(shapekey.ShapekeyList_UI)
-    del bpy.types.Scene.shapekey_props
+    # del bpy.types.Scene.shapekey_props
 if __name__ == "__main__":
     register()
 
