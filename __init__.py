@@ -27,7 +27,7 @@ def register():
     for script in scripts:
         bpy.utils.register_class(script)
 
-    bpy.types.Scene.copy_bool = bpy.props.PointerProperty(type=shapekey_quick.CopyBoolProperties)
+    bpy.types.Scene.copybool = bpy.props.PointerProperty(type=shapekey_quick.CopyBoolProperties)
     bpy.types.Scene.select_dirction = bpy.props.PointerProperty(type=shapekey_quick.DirctionProperties)
     bpy.types.Scene.selected_shape_key = bpy.props.PointerProperty(type=shapekey_quick.ShapekeyProperties)
 
@@ -36,7 +36,7 @@ def unregister():
     for script in scripts:
         bpy.utils.unregister_class(script)
 
-    del bpy.types.Scene.copy_bool
+    del bpy.types.Scene.copybool
     del bpy.types.Scene.select_dirction
     del bpy.types.Scene.selected_shape_key
 

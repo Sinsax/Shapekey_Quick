@@ -22,7 +22,7 @@ class copyshapekey(bpy.types.Operator):
         return True
 
     def execute(self,context):
-        script.copyshapekey(self)
+        script.copyshapekey(self,context.scene.copybool.copy_bool)
         return {'FINISHED'}
 
 
@@ -38,7 +38,7 @@ class selectside(bpy.types.Operator):
         return True
 
     def execute(self,context):
-        script.option()
+        script.option(self,context)
         return {'FINISHED'}
 
 class selectzero(bpy.types.Operator):
@@ -67,7 +67,7 @@ class CopyBoolProperties(bpy.types.PropertyGroup):
 
 class DirctionProperties(bpy.types.PropertyGroup):
     # 定义单选按钮的选项
-    select_dirction: bpy.props.EnumProperty(
+    dirction: bpy.props.EnumProperty(
         name="选项",
         description="选择一个选项",
         items=[
@@ -88,12 +88,12 @@ def get_shape_key_items(self, context):
             if key.name == "Basis":  # 排除基础形态键
                 continue
             items.append((key.name, key.name, f"形态键: {key.name}"))
-    
+
     return items
 
 class ShapekeyProperties(bpy.types.PropertyGroup):
     """插件属性组"""
-    selected_shape_key: bpy.props.EnumProperty(
+    key_name: bpy.props.EnumProperty(
         name="形态键",
         description="选择要操作的形态键",
         items=get_shape_key_items
@@ -112,7 +112,9 @@ class mirrorshapekey(bpy.types.Operator):
 
     
     def execute(self,context):
-        key_name = context.scene.selected_shape_key
+        key_name = context.scene.selected_shape_key.key_name
+
+        self.report({'INFO'}, f"{key_name}形态键获取")
         script.mirrorshapekey(self,key_name,context)
         return {'FINISHED'}
 
@@ -126,15 +128,29 @@ class ShapekeyQuickPanel(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-        selectrow = layout.row()
-        layout.operator("object.arkit2mmd")
-        layout.prop(context.scene.copy_bool, "copy_bool")
-        layout.operator("object.copyshapekey")
+    
+        # 顶部按钮行
+        top_row = layout.row()
+        top_row.operator("object.arkit2mmd")
+
+
+        # 复制设置
+        copy_box = layout.box()
+        copy_box.label(text="复制设置")
+        copy_row = copy_box.row()
+        copy_row.prop(context.scene.copybool, "copy_bool")
+        copy_row.operator("object.copyshapekey")
+
+        # 镜像相关设置
+        mirror_box = layout.box()
+        mirror_box.label(text="镜像设置")
+        mirror_box.prop(context.scene.selected_shape_key, "key_name", text="选择形态键")
+        mirror_row1 = mirror_box.row()
+        mirror_row1.prop(context.scene.select_dirction, "dirction", expand=True)
+        mirror_row2 = mirror_box.row()
+        mirror_row2.operator("object.selectside")
+        mirror_row2.operator("object.selectzero")
+        mirror_box.operator("object.mirrorshapkey")
+
         
-        # mirrorshapkey
-        layout.prop(context.scene.select_dirction, "select_dirction", expand=True)
-        layout.operator("object.mirrorshapkey")
-        selectrow.operator("object.selectside")
-        selectrow.operator("object.selectzero")
-        # 显示形态键滑块
-        layout.prop(context.scene.selected_shape_key, "selected_shape_key", text="形态键")
+        

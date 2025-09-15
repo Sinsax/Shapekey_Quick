@@ -66,18 +66,14 @@ def X_ZERO(self):
     select_x_range_vertices(x_min=-0.001, x_max=0.001)
     self.report({'INFO'}, "已选择X接近0的顶点")
 
-def option(self, context):
-    scene = context.scene
-    select_dirction = scene.select_dirction
-    
+def option(self,context):
+    dirction = context.scene.select_dirction.dirction
     # 根据选择执行不同操作
-    if select_dirction.select_dirction == 'left':
+    if dirction == 'left':
         X_POSITIVE(self)
-        self.report({'INFO'}, "选择X正向的顶点")
-    elif select_dirction.select_dirction == 'right':
+    elif dirction == 'right':
         X_NEGATIVE(self)
-        self.report({'INFO'}, "选择X负向的顶点")
-    return select_dirction.select_dirction
+    return dirction
 
 def arkit2mmd(self):
     modelKey = bpy.context.object.data.shape_keys
@@ -144,27 +140,34 @@ def arkit2mmd(self):
         currentkey.name = mapkey
         self.report({'INFO'},mapkey + "已生成")
 
-def copyshapekey(self):
-    copy = bpy.context.scene.copy_bool.copy_bool
+def shapekey_clear():
+    for clear in bpy.context.object.data.shape_keys.key_blocks:
+        clear.value = 0
+def copyshapekey(self,copy):
     self.report({'INFO'}, f"Another Operator Executed with copy_bool = {copy}")
     key = bpy.context.object.data.shape_keys
     index = bpy.context.object.active_shape_key_index
-    name = key.key_blocks[index].name
 
-    #if copy : key.key_blocks[index].value = 1
     bpy.ops.object.shape_key_add(from_mix=True)
     bpy.context.object.active_shape_key_index = index
-    if copy :key.key_blocks[index].value = 0
+    key.key_blocks[index].value = 0
 
-    if not copy : bpy.ops.object.shape_key_remove(all=False)
+    
     bpy.context.object.active_shape_key_index = len(key.key_blocks)-1
-    if not copy : key.key_blocks[bpy.context.object.active_shape_key_index].name = name
 
     bpy.ops.object.shape_key_move(type='TOP')
-    for a in range(0,index-1):
+
+    shapekey_clear()
+    key.key_blocks[1].value = 1
+    key.key_blocks[1].name = key.key_blocks[index].name + "_copy"
+
+    for a in range(1,index):
         bpy.ops.object.shape_key_move(type='DOWN')
 
-    if copy : key.key_blocks[bpy.context.object.active_shape_key_index].value = 1   
+    if not copy :
+        bpy.ops.object.shape_key_move(type='DOWN')
+        bpy.ops.object.shape_key_remove(all=False)
+    self.report({'INFO'}, f"复制形态键{key.key_blocks[index+1].name}完成")
 
 def nameGetindex(name):
     obj = bpy.context.object
@@ -179,23 +182,19 @@ def nameGetindex(name):
 def mirrorshapekey(self,key_name,context):
     # 获取当前活动对象
     obj = bpy.context.object
-    if obj is None or obj.type != 'MESH':
-        self.report({'ERROR'}, "请选择一个网格对象")
-        return {'CANCELLED'}
-
+    shapekey_clear()
     # 获取形态键数据
-    modelKey = obj.data.shape_keys
-    if modelKey is None:
+    if key_name is None:
         self.report({'ERROR'}, "无可用形态键，已跳过")
         return {'CANCELLED'}
 
-    if "mask_left" in obj.vertex_groups:
-        delete = obj.vertex_groups['mask_left']
-        obj.vertex_groups.remove(delete)
-        
     #select left or right
     dirtion = option(self, context)
 
+    if "mask_"+dirtion in obj.vertex_groups:
+        delete = obj.vertex_groups["mask_"+dirtion]
+        obj.vertex_groups.remove(delete)
+        
     bpy.ops.object.vertex_group_add()
 
     bpy.context.scene.tool_settings.use_auto_normalize = False
@@ -209,21 +208,30 @@ def mirrorshapekey(self,key_name,context):
     bpy.context.scene.tool_settings.vertex_group_weight = 0.5
     bpy.ops.object.vertex_group_assign()
 
+    
     index = obj.vertex_groups.active_index
     obj.vertex_groups[index].name = "mask_"+dirtion
 
     #quit editmode
     bpy.ops.object.editmode_toggle()
 
-    # change to panel prop
+    self.report({'INFO'}, f"mask_{dirtion}顶点组已生成")
+
+
+    #select shapekey
     index = nameGetindex(key_name)
+    self.report({'INFO'}, f"获取{key_name}的index为{index}")
     obj.active_shape_key_index = index
     obj.active_shape_key.vertex_group = "mask_"+dirtion
 
     obj.active_shape_key.value=1
-    bpy.context.scene.copy_bool.copy_bool = True
-    bpy.ops.object.copyshapekey()
 
+    copy_bool = bpy.context.scene.copybool.copy_bool
+    bpy.context.scene.copybool.copy_bool = True
+    bpy.context.scene.copybool.copy_bool = copy_bool
+
+    bpy.ops.object.copyshapekey()
+    
     #mirror
     bpy.ops.object.shape_key_mirror(use_topology=False)
     obj.active_shape_key.name = key_name +f"_{dirtion}Mirror"
