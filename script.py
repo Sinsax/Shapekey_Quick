@@ -66,6 +66,19 @@ def X_ZERO(self):
     select_x_range_vertices(x_min=-0.001, x_max=0.001)
     self.report({'INFO'}, "已选择X接近0的顶点")
 
+def option(self, context):
+    scene = context.scene
+    select_dirction = scene.select_dirction
+    
+    # 根据选择执行不同操作
+    if select_dirction.select_dirction == 'left':
+        X_POSITIVE(self)
+        self.report({'INFO'}, "选择X正向的顶点")
+    elif select_dirction.select_dirction == 'right':
+        X_NEGATIVE(self)
+        self.report({'INFO'}, "选择X负向的顶点")
+    return select_dirction.select_dirction
+
 def arkit2mmd(self):
     modelKey = bpy.context.object.data.shape_keys
     # 是否有形态键
@@ -132,7 +145,7 @@ def arkit2mmd(self):
         self.report({'INFO'},mapkey + "已生成")
 
 def copyshapekey(self):
-    copy = bpy.context.scene.shapekey_copy_props.copy_bool
+    copy = bpy.context.scene.copy_bool.copy_bool
     self.report({'INFO'}, f"Another Operator Executed with copy_bool = {copy}")
     key = bpy.context.object.data.shape_keys
     index = bpy.context.object.active_shape_key_index
@@ -163,7 +176,7 @@ def nameGetindex(name):
             return index
         index = index +1
 
-def mirrorshapekey(self,key_name):
+def mirrorshapekey(self,key_name,context):
     # 获取当前活动对象
     obj = bpy.context.object
     if obj is None or obj.type != 'MESH':
@@ -181,7 +194,7 @@ def mirrorshapekey(self,key_name):
         obj.vertex_groups.remove(delete)
         
     #select left or right
-    bpy.ops.object.selectside()
+    dirtion = option(self, context)
 
     bpy.ops.object.vertex_group_add()
 
@@ -197,34 +210,30 @@ def mirrorshapekey(self,key_name):
     bpy.ops.object.vertex_group_assign()
 
     index = obj.vertex_groups.active_index
-    obj.vertex_groups[index].name = "mask_left"
-
-
-    key_name = obj.active_shape_key.name
-    obj.active_shape_key.name = key_name +"_orignal"
-    obj.active_shape_key.vertex_group = "mask_left"
+    obj.vertex_groups[index].name = "mask_"+dirtion
 
     #quit editmode
     bpy.ops.object.editmode_toggle()
 
-
     # change to panel prop
     index = nameGetindex(key_name)
+    obj.active_shape_key_index = index
+    obj.active_shape_key.vertex_group = "mask_"+dirtion
+
     obj.active_shape_key.value=1
-    bpy.context.scene.shapekey_copy_props.copy_bool = True
+    bpy.context.scene.copy_bool.copy_bool = True
     bpy.ops.object.copyshapekey()
 
     #mirror
     bpy.ops.object.shape_key_mirror(use_topology=False)
-    obj.active_shape_key.name = key_name +"_mirror"
+    obj.active_shape_key.name = key_name +f"_{dirtion}Mirror"
 
     #combine
-    index = obj.active_shape_key_index
     obj.data.shape_keys.key_blocks[index+1].value=1
     bpy.ops.object.copyshapekey()
     obj.data.shape_keys.key_blocks[index+2].value=0
     #bpy.ops.object.shape_key_move(type='UP')
 
-    obj.active_shape_key.name = key_name
+    obj.active_shape_key.name = key_name+f"_{dirtion}Symmetry"
 
-    obj.data.shape_keys.key_blocks[key_name+"_orignal"].vertex_group = ""
+    obj.data.shape_keys.key_blocks[key_name].vertex_group = ""

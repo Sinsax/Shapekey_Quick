@@ -1,3 +1,4 @@
+from optparse import Option
 import bpy # type: ignore
 from . import script
 # arkit表情转为mmd的格式
@@ -25,6 +26,7 @@ class copyshapekey(bpy.types.Operator):
         return {'FINISHED'}
 
 
+
 class selectside(bpy.types.Operator):
     bl_idname = "object.selectside"  # 使用小写字母
     bl_label = "X axis Vertices"
@@ -35,18 +37,8 @@ class selectside(bpy.types.Operator):
     def poll(cls, context):
         return True
 
-    
     def execute(self,context):
-        scene = context.scene
-        select_dirction = scene.select_dirction
-        
-        # 根据选择执行不同操作
-        if select_dirction.select_dirction == 'OPTION1':
-            script.X_POSITIVE(self)
-            self.report({'INFO'}, "选择X正向的顶点")
-        elif select_dirction.select_dirction == 'OPTION2':
-            script.X_NEGATIVE(self)
-            self.report({'INFO'}, "选择X负向的顶点")
+        script.option()
         return {'FINISHED'}
 
 class selectzero(bpy.types.Operator):
@@ -79,19 +71,22 @@ class DirctionProperties(bpy.types.PropertyGroup):
         name="选项",
         description="选择一个选项",
         items=[
-            ('OPTION1', "X正向", "选择X正向的顶点"),
-            ('OPTION2', "X负向", "选择X负向的顶点"),
+            ('left', "X正向", "选择X正向的顶点"),
+            ('right', "X负向", "选择X负向的顶点"),
         ],
-        default='OPTION1'
+        default='left'
     ) # type: ignore
 
 def get_shape_key_items(self, context):
     """获取形态键枚举项"""
-    items = [('NONE', '无', '没有形态键')]
+    # items = [('NONE', '无', '没有形态键')]
+    items = []
     
     obj = context.active_object
     if obj and obj.data.shape_keys and obj.data.shape_keys.key_blocks:
         for key in obj.data.shape_keys.key_blocks:
+            if key.name == "Basis":  # 排除基础形态键
+                continue
             items.append((key.name, key.name, f"形态键: {key.name}"))
     
     return items
@@ -117,8 +112,8 @@ class mirrorshapekey(bpy.types.Operator):
 
     
     def execute(self,context):
-        shapekey_name = context.scene.selected_shape_key
-        script.mirrorshapekey(self=self,shapekey_name=shapekey_name)
+        key_name = context.scene.selected_shape_key
+        script.mirrorshapekey(self,key_name,context)
         return {'FINISHED'}
 
 # 定义一个面板
