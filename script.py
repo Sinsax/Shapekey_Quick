@@ -153,24 +153,78 @@ def copyshapekey(self):
 
     if copy : key.key_blocks[bpy.context.object.active_shape_key_index].value = 1   
 
-def mirrorshapekey(self):
+def nameGetindex(name):
+    obj = bpy.context.object
+    keyblocks = obj.data.shape_keys.key_blocks
+
+    index = 0 
+    for key in keyblocks:
+        if key.name == name:
+            return index
+        index = index +1
+
+def mirrorshapekey(self,key_name):
     # 获取当前活动对象
     obj = bpy.context.object
     if obj is None or obj.type != 'MESH':
         self.report({'ERROR'}, "请选择一个网格对象")
         return {'CANCELLED'}
 
-    # 获取当前顶点组
-    vg = obj.vertex_groups.active
-    if vg is None:
-        self.report({'ERROR'}, "请选择一个顶点组")
-        return {'CANCELLED'}
-    
-    group_name = vg.name
-
     # 获取形态键数据
     modelKey = obj.data.shape_keys
     if modelKey is None:
         self.report({'ERROR'}, "无可用形态键，已跳过")
         return {'CANCELLED'}
-    
+
+    if "mask_left" in obj.vertex_groups:
+        delete = obj.vertex_groups['mask_left']
+        obj.vertex_groups.remove(delete)
+        
+    #select left or right
+    bpy.ops.object.selectside()
+
+    bpy.ops.object.vertex_group_add()
+
+    bpy.context.scene.tool_settings.use_auto_normalize = False
+    bpy.context.scene.tool_settings.vertex_group_weight = 1
+    bpy.ops.object.vertex_group_assign()
+
+    #select mid
+    bpy.ops.object.selectzero()
+
+    bpy.context.scene.tool_settings.use_auto_normalize = False
+    bpy.context.scene.tool_settings.vertex_group_weight = 0.5
+    bpy.ops.object.vertex_group_assign()
+
+    index = obj.vertex_groups.active_index
+    obj.vertex_groups[index].name = "mask_left"
+
+
+    key_name = obj.active_shape_key.name
+    obj.active_shape_key.name = key_name +"_orignal"
+    obj.active_shape_key.vertex_group = "mask_left"
+
+    #quit editmode
+    bpy.ops.object.editmode_toggle()
+
+
+    # change to panel prop
+    index = nameGetindex(key_name)
+    obj.active_shape_key.value=1
+    bpy.context.scene.shapekey_copy_props.copy_bool = True
+    bpy.ops.object.copyshapekey()
+
+    #mirror
+    bpy.ops.object.shape_key_mirror(use_topology=False)
+    obj.active_shape_key.name = key_name +"_mirror"
+
+    #combine
+    index = obj.active_shape_key_index
+    obj.data.shape_keys.key_blocks[index+1].value=1
+    bpy.ops.object.copyshapekey()
+    obj.data.shape_keys.key_blocks[index+2].value=0
+    #bpy.ops.object.shape_key_move(type='UP')
+
+    obj.active_shape_key.name = key_name
+
+    obj.data.shape_keys.key_blocks[key_name+"_orignal"].vertex_group = ""
