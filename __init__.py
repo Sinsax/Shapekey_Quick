@@ -1,8 +1,8 @@
 bl_info = {
     "name": "Shapekey_Quick",
     "author": "Sinsa",
-    "blender": (4, 5, 3),
-    "version": (1,1,0),
+    "blender": (4, 2, 0),
+    "version": (1,0,0),
     "category": "Object",
 }
 
